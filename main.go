@@ -8,6 +8,7 @@ import (
 	"time"
 
 	flag "github.com/spf13/pflag"
+	"github.com/suhlig/is-tls-expiring/certcheck"
 	str2duration "github.com/xhit/go-str2duration/v2"
 )
 
@@ -16,32 +17,14 @@ var version = "vDEV"
 var commit = "NONE"
 var date = "UNKNOWN"
 
-type notValidYet struct {
-	CommonName string
-	NotBefore  time.Time
-}
-
-func (e notValidYet) Error() string {
-	return fmt.Sprintf("%s is not going to be valid before %s", e.CommonName, e.NotBefore)
-}
-
-type notValidAnymore struct {
-	CommonName string
-	NotAfter   time.Time
-}
-
-func (e notValidAnymore) Error() string {
-	return fmt.Sprintf("%s is not going to be valid after %s", e.CommonName, e.NotAfter)
-}
-
 func main() {
 	err := mainE()
 
 	switch err.(type) {
-	case notValidAnymore:
+	case certcheck.NotValidAnymore:
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
-	case notValidYet:
+	case certcheck.NotValidYet:
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	case error:
@@ -121,24 +104,16 @@ func isExpiring(addr string, fromNow time.Duration, logger func(string, ...any))
 
 	logger("Retrieved %d certs. Checking if all are going to be valid on %s:", len(certs), nowPlusDurationUTC)
 
-	for i, c := range certs {
-		logger("%d. %s", i+1, c.Subject.CommonName)
+	for i, cert := range certs {
+		logger("%d. %s", i+1, cert.Subject.CommonName)
 
-		if nowPlusDurationUTC.Before(c.NotBefore.UTC()) {
-			return notValidYet{
-				CommonName: c.Subject.CommonName,
-				NotBefore:  c.NotBefore.UTC(),
-			}
+		err = certcheck.Validate(cert, nowPlusDurationUTC)
+
+		if err != nil {
+			return err
 		}
 
-		if nowPlusDurationUTC.After(c.NotAfter.UTC()) {
-			return notValidAnymore{
-				CommonName: c.Subject.CommonName,
-				NotAfter:   c.NotAfter.UTC(),
-			}
-		}
-
-		logger("  ✅ valid between %s and %s", c.NotBefore, c.NotAfter.UTC())
+		logger("  ✅ valid between %s and %s", cert.NotBefore, cert.NotAfter.UTC())
 	}
 
 	return nil
