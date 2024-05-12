@@ -1,4 +1,4 @@
-module github.com/suhlig/is-tls-expiring
+module github.com/suhlig/cert-still-valid
 
 go 1.21.3
 

@@ -1,4 +1,4 @@
-# is-tls-expiring
+# cert-still-valid
 
 Returns with exit code
 
@@ -11,7 +11,7 @@ On any other error, the exit code will be `3`.
 This is intended for auto-refreshing [Tailscale certificates](https://tailscale.com/kb/1153/enabling-https) in a script like this:
 
 ```command
-is-tls-expiring --in 7d example.com
+cert-still-valid --in 7d example.com
 
 if [[ $? == 1 ]]; then
   tailscale cert --cert-file - --key-file - example.tailnet-1234.ts.net > /etc/ssl/example.pem && haproxy restart

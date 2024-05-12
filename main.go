@@ -8,7 +8,7 @@ import (
 	"time"
 
 	flag "github.com/spf13/pflag"
-	"github.com/suhlig/is-tls-expiring/certcheck"
+	"github.com/suhlig/cert-still-valid/certcheck"
 	str2duration "github.com/xhit/go-str2duration/v2"
 )
 
